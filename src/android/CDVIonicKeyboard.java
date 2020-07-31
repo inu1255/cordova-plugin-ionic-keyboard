@@ -129,7 +129,8 @@ public class CDVIonicKeyboard extends CordovaPlugin {
                             if (usableHeightNow != usableHeightPrevious) {
                                 int usableHeightSansKeyboard = mChildOfContent.getRootView().getHeight();
                                 int heightDifference = usableHeightSansKeyboard - usableHeightNow;
-                                if (heightDifference > (usableHeightSansKeyboard/4)) {
+                                if (heightDifference > 0) {
+                                // if (heightDifference > (usableHeightSansKeyboard/4)) {
                                     frameLayoutParams.height = usableHeightSansKeyboard - heightDifference;
                                 } else {
                                     frameLayoutParams.height = usableHeightSansKeyboard;
