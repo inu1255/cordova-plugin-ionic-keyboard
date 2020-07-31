@@ -17,6 +17,7 @@ import android.view.View;
 import android.view.ViewTreeObserver;
 import android.view.ViewTreeObserver.OnGlobalLayoutListener;
 import android.view.Window;
+import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 
 // import additionally required classes for calculating screen height
@@ -66,7 +67,7 @@ public class CDVIonicKeyboard extends CordovaPlugin {
         if ("init".equals(action)) {
             cordova.getThreadPool().execute(new Runnable() {
                 public void run() {
-                	//calculate density-independent pixels (dp)
+                    //calculate density-independent pixels (dp)
                     //http://developer.android.com/guide/practices/screens_support.html
                     DisplayMetrics dm = new DisplayMetrics();
                     cordova.getActivity().getWindowManager().getDefaultDisplay().getMetrics(dm);
@@ -77,6 +78,7 @@ public class CDVIonicKeyboard extends CordovaPlugin {
                     rootView = content.getRootView();
                     list = new OnGlobalLayoutListener() {
                         int previousHeightDiff = 0;
+
                         @Override
                         public void onGlobalLayout() {
                             boolean resize = preferences.getBoolean("resizeOnFullScreen", false);
@@ -108,15 +110,14 @@ public class CDVIonicKeyboard extends CordovaPlugin {
 
                             int heightDiff = screenHeight - resultBottom;
 
-                            int pixelHeightDiff = (int)(heightDiff / density);
+                            int pixelHeightDiff = (int) (heightDiff / density);
                             if (pixelHeightDiff > 100 && pixelHeightDiff != previousHeightDiff) { // if more than 100 pixels, its probably a keyboard...
                                 String msg = "S" + Integer.toString(pixelHeightDiff);
                                 result = new PluginResult(PluginResult.Status.OK, msg);
                                 result.setKeepCallback(true);
                                 callbackContext.sendPluginResult(result);
-                            }
-                            else if ( pixelHeightDiff != previousHeightDiff && ( previousHeightDiff - pixelHeightDiff ) > 100 ){
-                            	String msg = "H";
+                            } else if (pixelHeightDiff != previousHeightDiff && (previousHeightDiff - pixelHeightDiff) > 100) {
+                                String msg = "H";
                                 result = new PluginResult(PluginResult.Status.OK, msg);
                                 result.setKeepCallback(true);
                                 callbackContext.sendPluginResult(result);
@@ -129,8 +130,8 @@ public class CDVIonicKeyboard extends CordovaPlugin {
                             if (usableHeightNow != usableHeightPrevious) {
                                 int usableHeightSansKeyboard = mChildOfContent.getRootView().getHeight();
                                 int heightDifference = usableHeightSansKeyboard - usableHeightNow;
+//                                if (heightDifference > (usableHeightSansKeyboard/4)) {
                                 if (heightDifference > 0) {
-                                // if (heightDifference > (usableHeightSansKeyboard/4)) {
                                     frameLayoutParams.height = usableHeightSansKeyboard - heightDifference;
                                 } else {
                                     frameLayoutParams.height = usableHeightSansKeyboard;
@@ -143,14 +144,19 @@ public class CDVIonicKeyboard extends CordovaPlugin {
                         private int computeUsableHeight() {
                             Rect r = new Rect();
                             mChildOfContent.getWindowVisibleDisplayFrame(r);
-                            if ( checkStatusBarTransparent() ) return r.bottom;
+                            if (checkStatusBarTransparent())
+                                return r.bottom;
                             return r.height();
                         }
 
                         private boolean checkStatusBarTransparent() {
                             final Window window = cordova.getActivity().getWindow();
-                            return ( window.getStatusBarColor() == Color.TRANSPARENT
-                                    || window.getDecorView().getSystemUiVisibility() == View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN );
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                                if (window.getStatusBarColor() == Color.TRANSPARENT)
+                                    return true;
+                            }
+                            return ((window.getAttributes().flags & WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS) > 0
+                                    || window.getDecorView().getSystemUiVisibility() == View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
                         }
                     };
 
